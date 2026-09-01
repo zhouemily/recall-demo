@@ -2,8 +2,6 @@
 
 A Meeting Intelligence API built on [Recall.ai](https://recall.ai). Send a bot to any Zoom, Google Meet, or Microsoft Teams meeting and get back a clean transcript, summary, action items, and key decisions — all through a simple REST API, with no external AI dependency required.
 
-This project is designed as a foundation for Recall.ai customers to extend. The architecture keeps concerns separated so that swapping in an LLM, adding a database, or building a frontend on top requires minimal changes.
-
 ---
 
 ## What it does
@@ -69,8 +67,8 @@ src/
 **1. Clone the repository**
 
 ```bash
-git clone https://github.com/your-username/recall-meeting-info.git
-cd recall-meeting-info
+git clone https://github.com/zhouemily/recall-demo.git
+cd recall-demo
 ```
 
 **2. Install dependencies**
@@ -186,31 +184,9 @@ Response:
 
 ---
 
-## Extending this project
-
-The codebase is structured so that each extension point is isolated:
-
-| What you want to add | Where to make the change |
-|---|---|
-| LLM-powered insights (OpenAI, Anthropic, Gemini, etc.) | Replace `src/services/intelligenceService.ts` — the interface stays the same |
-| Persistent storage (Postgres, Redis, etc.) | Replace `src/store/meetingStore.ts` |
-| Additional insight fields (sentiment, topics, etc.) | Extend `MeetingInsights` in `src/types/index.ts` and update `intelligenceService.ts` |
-| Email or Slack notifications on meeting end | Add a notifier call in `src/handlers/botEventHandler.ts` → `onBotDone()` |
-| Authentication on the API | Add middleware in `src/index.ts` before `app.use("/api", apiRouter)` |
-| A frontend | Point it at the existing endpoints — no backend changes needed |
-| Calendar-based auto-scheduling | Add a new route group in `src/routes/` and a calendar service in `src/services/` |
-
----
-
 ## Tech stack
 
 - **Runtime**: Node.js + TypeScript
 - **Framework**: Express
 - **Meeting infrastructure**: Recall.ai
 - **HTTP client**: Axios
-
----
-
-## License
-
-MIT
