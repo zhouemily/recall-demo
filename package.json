@@ -1,0 +1,31 @@
+{
+  "name": "recall-meeting-info",
+  "version": "1.0.0",
+  "description": "A Meeting Intelligence API built on Recall.ai — send a bot to any meeting and get back a transcript, summary, action items, and key decisions.",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node --transpile-only src/index.ts",
+    "lint": "eslint 'src/**/*.ts'"
+  },
+  "keywords": [
+    "recall.ai",
+    "meeting",
+    "transcription",
+    "ai"
+  ],
+  "author": "Emily Zhou",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.7.2",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.14.10",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.5.3"
+  }
+}
