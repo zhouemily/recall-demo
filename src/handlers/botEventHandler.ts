@@ -63,7 +63,7 @@ export async function handleBotEvent(payload: RecallWebhookPayload): Promise<voi
       break;
 
     default:
-      logger.warn("Received unrecognised bot event", { event, bot_id });
+      logger.debug("Received unrecognised bot event", { event, bot_id });
   }
 }
 

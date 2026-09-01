@@ -40,9 +40,10 @@ webhooksRouter.post(
   "/recall",
   (req: Request, res: Response) => {
     // --- Step 1: Verify the request is genuinely from Recall.ai ---
-    const signature = req.headers["svix-signature"] as string | undefined;
-    const msgId = req.headers["svix-id"] as string | undefined;
-    const msgTimestamp = req.headers["svix-timestamp"] as string | undefined;
+    const signature = (req.headers["svix-signature"] ?? req.headers["webhook-signature"]) as string | undefined;
+    const msgId = (req.headers["svix-id"] ?? req.headers["webhook-id"]) as string | undefined;
+    const msgTimestamp = (req.headers["svix-timestamp"] ?? req.headers["webhook-timestamp"]) as string | undefined;
+
 
     if (!signature || !msgId || !msgTimestamp) {
       logger.warn("Webhook request missing Svix signature headers");

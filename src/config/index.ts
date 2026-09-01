@@ -55,3 +55,13 @@ export const PORT = parseInt(process.env.PORT ?? "3000", 10);
 
 /** Default display name shown in the meeting for the bot. */
 export const DEFAULT_BOT_NAME = "Meeting Notetaker";
+
+// ---------------------------------------------------------------------------
+// Anthropic (optional — enables AI-powered insights)
+// ---------------------------------------------------------------------------
+
+/**
+ * Anthropic API key for Claude-powered meeting insights.
+ * If not set, the intelligence service falls back to local heuristics.
+ */
+export const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY ?? null;

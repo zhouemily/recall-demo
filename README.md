@@ -1,6 +1,6 @@
 # recall-meeting-info
 
-A Meeting Intelligence API built on [Recall.ai](https://recall.ai). Send a bot to any Zoom, Google Meet, or Microsoft Teams meeting and get back a clean transcript, summary, action items, and key decisions — all through a simple REST API, with no external AI dependency required.
+A Meeting Intelligence API built on [Recall.ai](https://recall.ai). Send a bot to any Zoom, Google Meet, or Microsoft Teams meeting and get back a clean transcript, summary, action items, and key decisions — all through a simple REST API.
 
 ---
 
@@ -9,8 +9,10 @@ A Meeting Intelligence API built on [Recall.ai](https://recall.ai). Send a bot t
 1. You call `POST /api/meetings` with a meeting URL.
 2. A Recall.ai bot joins the meeting and records it.
 3. When the meeting ends, Recall.ai sends a webhook to this server.
-4. You call `POST /api/meetings/:bot_id/process` to fetch the transcript and generate structured insights.
+4. The server automatically fetches the transcript and generates insights.
 5. You call `GET /api/meetings/:bot_id/insights` to retrieve the summary, action items, and decisions.
+
+Insights are generated automatically via the webhook. The `POST /api/meetings/:bot_id/process` endpoint is also available as a manual fallback — useful if the webhook was missed or the server restarted before the meeting ended.
 
 ---
 
