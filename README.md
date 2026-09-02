@@ -9,7 +9,7 @@ A Meeting Intelligence API built on [Recall.ai](https://recall.ai). Send a bot t
 1. You call `POST /api/meetings` with a meeting URL.
 2. A Recall.ai bot joins the meeting and records it.
 3. When the meeting ends, Recall.ai sends a webhook to this server.
-4. The server automatically fetches the transcript and generates insights.
+4. The server automatically fetches the transcript and generates AI-powered insights.
 5. You call `GET /api/meetings/:bot_id/insights` to retrieve the summary, action items, and decisions.
 
 Insights are generated automatically via the webhook. The `POST /api/meetings/:bot_id/process` endpoint is also available as a manual fallback — useful if the webhook was missed or the server restarted before the meeting ended.
@@ -60,6 +60,7 @@ src/
 
 - [Node.js](https://nodejs.org/) v18 or higher
 - A [Recall.ai](https://recall.ai) account with an API key
+- A [Google Gemini](https://aistudio.google.com) API key (optional — enables AI-powered insights; the server works without it)
 - [ngrok](https://ngrok.com) (or any tunnel) to expose your local server for Recall.ai webhooks during development
 
 ---
@@ -91,6 +92,7 @@ Edit `.env` and fill in your credentials:
 RECALL_REGION=us-west-2
 RECALL_API_KEY=your_recall_api_key_here
 RECALL_WEBHOOK_SECRET=your_webhook_verification_secret_here
+GEMINI_API_KEY=your_gemini_api_key_here  # optional
 PORT=3000
 ```
 
@@ -190,5 +192,6 @@ Response:
 
 - **Runtime**: Node.js + TypeScript
 - **Framework**: Express
+- **AI (optional)**: Google Gemini (gemini-3.6-flash) — falls back to local heuristics if key is not set
 - **Meeting infrastructure**: Recall.ai
 - **HTTP client**: Axios

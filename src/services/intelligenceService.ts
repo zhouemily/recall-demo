@@ -1,18 +1,18 @@
 /**
  * Intelligence service.
  *
- * When ANTHROPIC_API_KEY is set, uses Claude to generate a proper meeting
+ * When GEMINI_API_KEY is set, uses Google Gemini to generate a proper meeting
  * summary, action items, and key decisions from the transcript.
  *
  * Falls back to local keyword-based heuristics when no API key is present,
  * so the server remains fully functional without an AI dependency.
  */
 
-import Anthropic from "@anthropic-ai/sdk";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { TranscriptEntry, MeetingInsights, ActionItem } from "../types";
 import { formatTranscriptForPrompt, extractParticipants } from "./transcriptService";
 import { logger } from "../utils/logger";
-import { ANTHROPIC_API_KEY } from "../config";
+import { GEMINI_API_KEY } from "../config";
 
 // ---------------------------------------------------------------------------
 // Keyword lists (used by the heuristic fallback only)
@@ -37,28 +37,30 @@ const DECISION_KEYWORDS = [
 
 /**
  * Generates structured meeting insights from a normalised transcript.
- * Uses Claude when ANTHROPIC_API_KEY is configured; falls back to heuristics.
+ * Uses Gemini when GEMINI_API_KEY is configured; falls back to heuristics.
  */
 export async function generateInsights(transcript: TranscriptEntry[]): Promise<MeetingInsights> {
-  if (ANTHROPIC_API_KEY) {
-    logger.info("Generating meeting insights via Claude", {
+  if (GEMINI_API_KEY) {
+    logger.info("Generating meeting insights via Gemini", {
       transcript_entries: transcript.length,
     });
-    return generateInsightsWithClaude(transcript);
+    return generateInsightsWithGemini(transcript);
   }
 
-  logger.info("ANTHROPIC_API_KEY not set — using local heuristics", {
+  logger.info("GEMINI_API_KEY not set — using local heuristics", {
     transcript_entries: transcript.length,
   });
   return generateInsightsLocally(transcript);
 }
 
 // ---------------------------------------------------------------------------
-// Claude-powered implementation
+// Gemini-powered implementation
 // ---------------------------------------------------------------------------
 
-async function generateInsightsWithClaude(transcript: TranscriptEntry[]): Promise<MeetingInsights> {
-  const client = new Anthropic({ apiKey: ANTHROPIC_API_KEY! });
+async function generateInsightsWithGemini(transcript: TranscriptEntry[]): Promise<MeetingInsights> {
+  const genAI = new GoogleGenerativeAI(GEMINI_API_KEY!);
+  const model = genAI.getGenerativeModel({ model: "gemini-3.6-flash" });
+
   const participants = extractParticipants(transcript);
   const transcriptText = formatTranscriptForPrompt(transcript);
 
@@ -76,26 +78,18 @@ Participants identified: ${participants.join(", ") || "unknown"}
 Transcript:
 ${transcriptText}`;
 
-  const message = await client.messages.create({
-    model: "claude-haiku-4-5",
-    max_tokens: 1024,
-    messages: [{ role: "user", content: prompt }],
-  });
-
-  const content = message.content[0];
-  if (content.type !== "text") {
-    throw new Error("Unexpected response type from Claude");
-  }
+  const result = await model.generateContent(prompt);
+  const text = result.response.text().trim();
 
   let parsed: MeetingInsights;
   try {
-    parsed = JSON.parse(content.text) as MeetingInsights;
+    parsed = JSON.parse(text) as MeetingInsights;
   } catch {
-    logger.error("Failed to parse Claude response as JSON", { raw: content.text });
-    throw new Error("Claude returned invalid JSON");
+    logger.error("Failed to parse Gemini response as JSON", { raw: text });
+    throw new Error("Gemini returned invalid JSON");
   }
 
-  logger.info("Claude insights generated successfully", {
+  logger.info("Gemini insights generated successfully", {
     action_items: parsed.action_items?.length ?? 0,
     key_decisions: parsed.key_decisions?.length ?? 0,
   });

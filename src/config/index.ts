@@ -57,11 +57,11 @@ export const PORT = parseInt(process.env.PORT ?? "3000", 10);
 export const DEFAULT_BOT_NAME = "Meeting Notetaker";
 
 // ---------------------------------------------------------------------------
-// Anthropic (optional — enables AI-powered insights)
+// Google Gemini (optional — enables AI-powered insights)
 // ---------------------------------------------------------------------------
 
 /**
- * Anthropic API key for Claude-powered meeting insights.
+ * Google Gemini API key for AI-powered meeting insights.
  * If not set, the intelligence service falls back to local heuristics.
  */
-export const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY ?? null;
+export const GEMINI_API_KEY = process.env.GEMINI_API_KEY ?? null;

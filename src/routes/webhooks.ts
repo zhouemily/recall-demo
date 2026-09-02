@@ -44,7 +44,6 @@ webhooksRouter.post(
     const msgId = (req.headers["svix-id"] ?? req.headers["webhook-id"]) as string | undefined;
     const msgTimestamp = (req.headers["svix-timestamp"] ?? req.headers["webhook-timestamp"]) as string | undefined;
 
-
     if (!signature || !msgId || !msgTimestamp) {
       logger.warn("Webhook request missing Svix signature headers");
       return res.status(401).json({ error: "Missing signature headers" });
