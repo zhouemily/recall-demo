@@ -1,0 +1,481 @@
+openapi: 3.0.3
+info:
+  title: Recall Meeting Intelligence API
+  description: |
+    A REST API that dispatches AI-powered bots to video meetings, captures
+    transcripts via Recall.ai, and generates structured insights (summary,
+    action items, key decisions) using Google Gemini.
+
+    ## How it works
+    1. `POST /api/meetings` — send a bot to any meeting URL
+    2. The bot joins, records, and transcribes automatically
+    3. When the meeting ends, Gemini analyses the transcript
+    4. Retrieve results via `/transcript` and `/insights`
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:3000
+    description: Local development server
+
+tags:
+  - name: Meetings
+    description: Create bots, track meetings, and retrieve results
+  - name: Webhooks
+    description: Recall.ai lifecycle event receiver (called by Recall.ai, not your app)
+  - name: Health
+    description: Server liveness probe
+
+paths:
+  /health:
+    get:
+      tags: [Health]
+      summary: Health check
+      description: Returns server status and uptime.
+      operationId: getHealth
+      responses:
+        "200":
+          description: Server is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  uptime_seconds:
+                    type: integer
+                    example: 142
+
+  /api/meetings:
+    post:
+      tags: [Meetings]
+      summary: Start a meeting bot
+      description: |
+        Sends a Recall.ai bot to the specified meeting URL. When the meeting
+        ends the bot automatically fetches the transcript and generates AI
+        insights via Google Gemini.
+      operationId: createMeeting
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [meeting_url]
+              properties:
+                meeting_url:
+                  type: string
+                  format: uri
+                  description: Full URL of the meeting to join
+                  example: https://zoom.us/j/123456789
+                bot_name:
+                  type: string
+                  description: Display name for the bot. Defaults to "Meeting Notetaker".
+                  example: Meeting Notetaker
+      responses:
+        "201":
+          description: Bot created and joining the meeting
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MeetingRecordResponse"
+        "400":
+          description: Missing or invalid request body
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "502":
+          description: Recall.ai rejected the request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    get:
+      tags: [Meetings]
+      summary: List all meetings
+      description: Returns all tracked meetings, newest first.
+      operationId: listMeetings
+      responses:
+        "200":
+          description: Array of meeting records
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/MeetingRecord"
+
+  /api/meetings/{bot_id}:
+    get:
+      tags: [Meetings]
+      summary: Get meeting status
+      description: Returns the current status and metadata for a single meeting.
+      operationId: getMeeting
+      parameters:
+        - $ref: "#/components/parameters/BotId"
+      responses:
+        "200":
+          description: Meeting record
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MeetingRecordResponse"
+        "404":
+          description: Meeting not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/meetings/{bot_id}/transcript:
+    get:
+      tags: [Meetings]
+      summary: Get meeting transcript
+      description: |
+        Returns the full transcript for a completed meeting.
+        Returns **202** if the transcript is not yet available.
+      operationId: getMeetingTranscript
+      parameters:
+        - $ref: "#/components/parameters/BotId"
+      responses:
+        "200":
+          description: Full transcript
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/TranscriptEntry"
+        "202":
+          description: Transcript not yet available
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Meeting not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/meetings/{bot_id}/insights:
+    get:
+      tags: [Meetings]
+      summary: Get AI-generated insights
+      description: |
+        Returns Gemini-generated insights: a prose summary, action items with
+        owners, key decisions, and a participant list.
+
+        Insights are generated automatically when the meeting ends. Use
+        `POST /api/meetings/{bot_id}/process` to trigger manually if the
+        webhook was missed.
+
+        Returns **202** if insights are not yet available.
+      operationId: getMeetingInsights
+      parameters:
+        - $ref: "#/components/parameters/BotId"
+      responses:
+        "200":
+          description: AI-generated meeting insights
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/MeetingInsights"
+        "202":
+          description: Insights not yet available
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Meeting not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/meetings/{bot_id}/process:
+    post:
+      tags: [Meetings]
+      summary: Manually trigger processing
+      description: |
+        Manually triggers transcript fetching and AI insight generation.
+
+        **When to use:**
+        - The webhook was missed and the meeting is stuck with null transcript/insights
+        - Processing failed and needs to be retried
+
+        Idempotent — re-fetches and overwrites existing transcript and insights.
+      operationId: processMeeting
+      parameters:
+        - $ref: "#/components/parameters/BotId"
+      responses:
+        "200":
+          description: Processing complete — returns the updated meeting record
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MeetingRecordResponse"
+        "404":
+          description: Meeting not found locally or in Recall.ai
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "502":
+          description: Transcript fetch or AI processing failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/webhooks/recall:
+    post:
+      tags: [Webhooks]
+      summary: Recall.ai webhook receiver
+      description: |
+        Receives bot lifecycle events from Recall.ai (delivered via Svix).
+        Verified using HMAC-SHA256 before processing.
+
+        **Called by Recall.ai — not by your application.**
+
+        Register in the Recall.ai dashboard:
+        `Dashboard → Webhooks → Add Endpoint → https://your-domain/api/webhooks/recall`
+      operationId: recallWebhook
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecallWebhookPayload"
+      responses:
+        "200":
+          description: Event received and queued for async processing
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  received:
+                    type: boolean
+                    example: true
+        "401":
+          description: Missing or invalid Svix signature
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Invalid signature
+
+components:
+  parameters:
+    BotId:
+      name: bot_id
+      in: path
+      required: true
+      description: The Recall.ai bot UUID returned when the meeting was created
+      schema:
+        type: string
+        format: uuid
+        example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+
+  schemas:
+    BotStatus:
+      type: string
+      description: Current lifecycle state of the Recall.ai bot
+      enum:
+        - ready
+        - joining_call
+        - in_waiting_room
+        - in_call_not_recording
+        - in_call_recording
+        - call_ended
+        - done
+        - fatal
+
+    ActionItem:
+      type: object
+      properties:
+        task:
+          type: string
+          example: Complete design review by Friday
+        owner:
+          type: string
+          nullable: true
+          example: Sarah
+
+    MeetingInsights:
+      type: object
+      properties:
+        summary:
+          type: string
+          example: The team aligned on Q4 priorities and confirmed the dashboard feature launch for end of October.
+        action_items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ActionItem"
+        key_decisions:
+          type: array
+          items:
+            type: string
+          example:
+            - Prioritise dashboard feature over analytics refactor
+            - Move weekly syncs to Tuesday starting next week
+        participants:
+          type: array
+          items:
+            type: string
+          example: [Emily Zhou, Sarah]
+
+    TranscriptEntry:
+      type: object
+      properties:
+        speaker:
+          type: string
+          nullable: true
+          example: Emily Zhou
+        speaker_id:
+          type: string
+          nullable: true
+          example: participant_1
+        text:
+          type: string
+          example: Let's start with a quick update on the dashboard feature.
+        start_time:
+          type: number
+          example: 12.5
+        end_time:
+          type: number
+          example: 17.3
+        words:
+          type: array
+          items:
+            type: object
+            properties:
+              text:
+                type: string
+                example: "Let's"
+              start_time:
+                type: number
+                example: 12.5
+              end_time:
+                type: number
+                example: 12.9
+
+    MeetingRecord:
+      type: object
+      properties:
+        bot_id:
+          type: string
+          format: uuid
+          example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+        meeting_url:
+          type: string
+          format: uri
+          example: https://zoom.us/j/123456789
+        bot_name:
+          type: string
+          example: Meeting Notetaker
+        status:
+          $ref: "#/components/schemas/BotStatus"
+        created_at:
+          type: string
+          format: date-time
+          example: 2024-01-15T10:00:00.000Z
+        updated_at:
+          type: string
+          format: date-time
+          example: 2024-01-15T10:45:00.000Z
+        transcript:
+          nullable: true
+          type: array
+          items:
+            $ref: "#/components/schemas/TranscriptEntry"
+          description: Populated once the meeting ends and media is available
+        insights:
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/MeetingInsights"
+          description: Gemini-generated insights, populated after transcript processing
+
+    MeetingRecordResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: "#/components/schemas/MeetingRecord"
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+          example: Meeting not found
+
+    RecallWebhookPayload:
+      type: object
+      properties:
+        event:
+          type: string
+          enum:
+            - bot.joining_call
+            - bot.in_waiting_room
+            - bot.in_call_not_recording
+            - bot.recording_permission_allowed
+            - bot.recording_permission_denied
+            - bot.in_call_recording
+            - bot.call_ended
+            - bot.done
+            - bot.fatal
+        data:
+          type: object
+          properties:
+            data:
+              type: object
+              properties:
+                code:
+                  type: string
+                sub_code:
+                  type: string
+                  nullable: true
+                updated_at:
+                  type: string
+                  format: date-time
+            bot:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                metadata:
+                  type: object

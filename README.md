@@ -20,6 +20,7 @@ Insights are generated automatically via the webhook. The `POST /api/meetings/:b
 
 | Method | Path | Description |
 |--------|------|-------------|
+| `GET` | `/api-docs` | Interactive API documentation (Swagger UI) |
 | `GET` | `/health` | Server liveness check |
 | `POST` | `/api/meetings` | Send a bot to a meeting |
 | `GET` | `/api/meetings` | List all tracked meetings |
@@ -194,4 +195,5 @@ Response:
 - **Framework**: Express
 - **AI (optional)**: Google Gemini (gemini-3.6-flash) — falls back to local heuristics if key is not set
 - **Meeting infrastructure**: Recall.ai
+- **API docs**: OpenAPI 3.0 + Swagger UI
 - **HTTP client**: Axios
