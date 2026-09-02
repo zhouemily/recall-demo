@@ -189,6 +189,14 @@ Response:
 
 ---
 
+## Testing the API
+
+**Postman**: Import `recall-meeting-info.postman_collection.json` — all endpoints are pre-configured with a `{{baseUrl}}` variable (default: `http://localhost:3000`). Set `{{bot_id}}` after creating a meeting to chain requests together.
+
+**Swagger UI**: Visit `http://localhost:3000/api-docs` for interactive browser-based docs with live "Try it out" support.
+
+---
+
 ## Tech stack
 
 - **Runtime**: Node.js + TypeScript

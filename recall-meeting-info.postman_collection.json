@@ -1,0 +1,99 @@
+{
+  "info": {
+    "name": "recall-meeting-info",
+    "description": "API collection for the recall-meeting-info service — join meetings, retrieve transcripts, and generate AI insights via Recall.ai + Gemini.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "bot_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/health",
+        "description": "Check if the server is running."
+      }
+    },
+    {
+      "name": "Create Meeting (join a call)",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/meetings",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"meeting_url\": \"https://meet.google.com/your-meeting-code\",\n  \"bot_name\": \"Recall Note-Taker\"\n}"
+        },
+        "description": "Send a Recall.ai bot to join a meeting. Returns a bot_id — save it to the bot_id variable for subsequent requests."
+      }
+    },
+    {
+      "name": "List All Meetings",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/meetings",
+        "description": "Returns all meetings that have been recorded."
+      }
+    },
+    {
+      "name": "Get Meeting",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/meetings/{{bot_id}}",
+        "description": "Get status and metadata for a specific meeting by bot_id."
+      }
+    },
+    {
+      "name": "Get Transcript",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/meetings/{{bot_id}}/transcript",
+        "description": "Retrieve the full transcript for a completed meeting."
+      }
+    },
+    {
+      "name": "Get Insights",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/meetings/{{bot_id}}/insights",
+        "description": "Get AI-generated insights (summary, action items, key topics) for a completed meeting."
+      }
+    },
+    {
+      "name": "Process Meeting (manual trigger)",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/meetings/{{bot_id}}/process",
+        "description": "Manually trigger transcript fetching and AI insight generation for a meeting."
+      }
+    },
+    {
+      "name": "Simulate Webhook (bot.done)",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/webhooks/recall",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"event\": \"bot.done\",\n  \"data\": {\n    \"bot_id\": \"{{bot_id}}\"\n  }\n}"
+        },
+        "description": "Simulate a Recall.ai webhook firing when a bot finishes recording."
+      }
+    }
+  ]
+}
