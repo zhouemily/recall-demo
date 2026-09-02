@@ -67,6 +67,10 @@ app.listen(PORT, () => {
     process:        `POST /api/meetings/:bot_id/process`,
     webhook:        `POST /api/webhooks/recall`,
   });
+  logger.info("Optional features:", {
+    ai_insights: process.env.GEMINI_API_KEY ? "enabled (Gemini)" : "disabled (heuristics fallback)",
+    slack_notifications: process.env.SLACK_WEBHOOK_URL ? "enabled" : "disabled",
+  });
 });
 
 export default app;
