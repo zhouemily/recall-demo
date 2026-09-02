@@ -62,7 +62,7 @@ src/
 
 ## Prerequisites
 
-- [Node.js](https://nodejs.org/) v18 or higher
+- [Node.js](https://nodejs.org/) v18 or higher (run `nvm use` if you use nvm — the repo includes a `.nvmrc`)
 - A [Recall.ai](https://recall.ai) account with an API key
 - A [Google Gemini](https://aistudio.google.com) API key (optional — enables AI-powered insights; the server works without it)
 - A Slack incoming webhook URL (optional — enables automatic Slack notifications when a meeting ends)
