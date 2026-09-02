@@ -55,8 +55,10 @@ src/
 │   └── botEventHandler.ts     # Routes webhook events to the right processing logic
 ├── store/
 │   └── meetingStore.ts        # In-memory meeting state (swap for a DB here)
-└── types/
-    └── index.ts               # All shared TypeScript interfaces
+├── types/
+│   └── index.ts               # All shared TypeScript interfaces
+└── utils/
+    └── logger.ts              # Structured logger (swap for Winston/Pino in production)
 ```
 
 ---
@@ -135,6 +137,70 @@ Subscribe to all `bot.*` events.
 
 ---
 
+## End-to-end testing guide
+
+This walks through a complete test — from starting a real meeting to reading the AI-generated summary — using only a browser and `curl`. Works with Google Meet, Zoom, or Microsoft Teams URLs.
+
+### Before you start
+
+- Server running locally (`npm run dev`)
+- ngrok running (`ngrok http 3000`) with the webhook registered in Recall.ai (see Setup steps 5–6)
+
+### Timing
+
+The bot needs the meeting to be live when it joins. The typical sequence is: start your meeting → send the bot (takes 20–40 seconds to join) → talk for 1–2 minutes → end the meeting for everyone → wait ~30 seconds for Recall.ai to process → fetch your insights.
+
+### Run the test
+
+**1. Start a meeting and copy the URL**
+
+The bot works with any of these platforms — grab your meeting URL before sending the bot:
+
+- **Google Meet** — go to [meet.google.com](https://meet.google.com), click **New meeting → Start an instant meeting**, and copy the URL from the address bar (e.g. `https://meet.google.com/abc-defg-hij`)
+- **Zoom** — open Zoom, click **New Meeting**, then go to **Participants → Invite → Copy Invite Link** and extract the `https://zoom.us/j/...` portion
+- **Microsoft Teams** — go to **Calendar → New meeting**, save it, click **Join**, and copy the join link (e.g. `https://teams.microsoft.com/l/meetup-join/...`)
+
+**2. Send the bot** (replace the URL with your actual meeting URL):
+
+```bash
+curl -s -X POST http://localhost:3000/api/meetings \
+  -H "Content-Type: application/json" \
+  -d '{"meeting_url": "https://meet.google.com/abc-defg-hij"}' \
+  | python3 -m json.tool
+```
+
+Save the `bot_id` from the response.
+
+**3. Admit the bot** — "Meeting Notetaker" will appear in the waiting room within 20–40 seconds. Admit it.
+
+**4. Talk for 1–2 minutes**, then end the meeting for everyone (not just yourself).
+
+**5. Fetch your results:**
+
+```bash
+curl -s http://localhost:3000/api/meetings/YOUR_BOT_ID/insights | python3 -m json.tool
+```
+
+### If the webhook never arrives
+
+Use the manual fallback — this works even after a server restart:
+
+```bash
+curl -s -X POST http://localhost:3000/api/meetings/YOUR_BOT_ID/process | python3 -m json.tool
+```
+
+### Troubleshooting
+
+| Symptom | Likely cause | Fix |
+|---|---|---|
+| `"Failed to send bot to meeting"` | Invalid meeting URL | Use a real, live meeting URL |
+| Bot never appears | Invalid API key | Check `RECALL_API_KEY` in `.env` |
+| Insights are `null` after meeting ends | Webhook not registered or ngrok URL changed | Re-register ngrok URL; or use `/process` |
+| `"status": "fatal"` | Bot was blocked or meeting ended too fast | Admit the bot from the waiting room |
+| Summary is vague | Meeting too short | Record at least 2 minutes of clear speech |
+
+---
+
 ## Usage
 
 **Send a bot to a meeting**
@@ -161,12 +227,6 @@ Response:
     "insights": null
   }
 }
-```
-
-**Process the meeting after it ends**
-
-```bash
-curl -X POST http://localhost:3000/api/meetings/abc-123-.../process
 ```
 
 **Get insights**

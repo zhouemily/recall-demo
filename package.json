@@ -1,7 +1,7 @@
 {
   "name": "recall-meeting-info",
   "version": "1.0.0",
-  "description": "A Meeting Intelligence API built on Recall.ai — send a bot to any meeting and get back a transcript, summary, action items, and key decisions.",
+  "description": "A Meeting Intelligence API built on Recall.ai \u2014 send a bot to any meeting and get back a transcript, summary, action items, and key decisions.",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
@@ -18,7 +18,6 @@
   "author": "Emily Zhou",
   "license": "MIT",
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.123.0",
     "@google/generative-ai": "^0.24.1",
     "axios": "^1.7.2",
     "dotenv": "^16.4.5",
