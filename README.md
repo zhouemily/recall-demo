@@ -10,7 +10,8 @@ A Meeting Intelligence API built on [Recall.ai](https://recall.ai). Send a bot t
 2. A Recall.ai bot joins the meeting and records it.
 3. When the meeting ends, Recall.ai sends a webhook to this server.
 4. The server automatically fetches the transcript and generates AI-powered insights.
-5. You call `GET /api/meetings/:bot_id/insights` to retrieve the summary, action items, and decisions.
+5. If a Slack webhook is configured, the server posts the summary and action items to your Slack channel automatically.
+6. You call `GET /api/meetings/:bot_id/insights` to retrieve the summary, action items, and decisions.
 
 Insights are generated automatically via the webhook. The `POST /api/meetings/:bot_id/process` endpoint is also available as a manual fallback — useful if the webhook was missed or the server restarted before the meeting ended.
 
@@ -64,6 +65,7 @@ src/
 - [Node.js](https://nodejs.org/) v18 or higher
 - A [Recall.ai](https://recall.ai) account with an API key
 - A [Google Gemini](https://aistudio.google.com) API key (optional — enables AI-powered insights; the server works without it)
+- A Slack incoming webhook URL (optional — enables automatic Slack notifications when a meeting ends)
 - [ngrok](https://ngrok.com) (or any tunnel) to expose your local server for Recall.ai webhooks during development
 
 ---
@@ -95,11 +97,14 @@ Edit `.env` and fill in your credentials:
 RECALL_REGION=us-west-2
 RECALL_API_KEY=your_recall_api_key_here
 RECALL_WEBHOOK_SECRET=your_webhook_verification_secret_here
-GEMINI_API_KEY=your_gemini_api_key_here  # optional
+GEMINI_API_KEY=your_gemini_api_key_here        # optional
+SLACK_WEBHOOK_URL=your_slack_webhook_url_here  # optional
 PORT=3000
 ```
 
 Your Recall.ai region and credentials are available in your Recall dashboard under **Developers → API Keys & Secrets**.
+
+To set up Slack notifications, create an incoming webhook at [api.slack.com/apps](https://api.slack.com/apps) and paste the webhook URL into `SLACK_WEBHOOK_URL`.
 
 **4. Start the development server**
 
@@ -207,4 +212,5 @@ Response:
 - **Meeting infrastructure**: Recall.ai
 - **API docs**: OpenAPI 3.0 + Swagger UI
 - **HTTP client**: Axios
+- **Notifications (optional)**: Slack incoming webhooks — posts summary and action items when a meeting ends
 - **Rate limiting**: express-rate-limit (100 requests/15 min per IP)
