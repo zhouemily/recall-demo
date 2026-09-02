@@ -1,4 +1,5 @@
-# recall-meeting-info
+# Meeting Intelligence API
+> Built on [Recall.ai](https://recall.ai)
 
 A Meeting Intelligence API built on [Recall.ai](https://recall.ai). Send a bot to any Zoom, Google Meet, or Microsoft Teams meeting and get back a clean transcript, summary, action items, and key decisions — all through a simple REST API.
 
