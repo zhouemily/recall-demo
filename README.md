@@ -1,6 +1,20 @@
 # Meeting Intelligence API
 
-Send a bot to any Zoom, Google Meet, or Microsoft Teams meeting and get back a clean transcript, summary, action items, and key decisions — all through a simple REST API. Built on [Recall.ai](https://recall.ai).
+Send a bot to any Zoom, Google Meet, or Microsoft Teams meeting and get back a clean transcript, summary, action items, and key decisions — all through a simple REST API. Built on [Recall.ai](https://docs.recall.ai).
+
+---
+
+## Contents
+
+- [What it does](#what-it-does)
+- [Endpoints](#endpoints)
+- [Project structure](#project-structure)
+- [Prerequisites](#prerequisites)
+- [Setup](#setup)
+- [End-to-end testing guide](#end-to-end-testing-guide)
+- [Usage](#usage)
+- [Testing the API](#testing-the-api)
+- [Tech stack](#tech-stack)
 
 ---
 
@@ -137,7 +151,7 @@ Subscribe to all `bot.*` events.
 ---
 
 <details>
-<summary><strong>End-to-end testing guide</strong></summary>
+<summary><h2>End-to-end testing guide</h2></summary>
 
 This walks through a complete test — from starting a real meeting to reading the AI-generated summary — using only a browser and `curl`. Works with Google Meet, Zoom, or Microsoft Teams URLs.
 
