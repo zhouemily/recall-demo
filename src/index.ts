@@ -10,6 +10,7 @@ import { SwaggerTheme, SwaggerThemeNameEnum } from "swagger-themes";
 import { readFileSync } from "fs";
 import { join } from "path";
 import yaml from "js-yaml";
+import rateLimit from "express-rate-limit";
 import { PORT } from "./config";
 import { apiRouter } from "./routes";
 import { logger } from "./utils/logger";
@@ -19,12 +20,16 @@ const openapiSpec = yaml.load(
 ) as object;
 
 const theme = new SwaggerTheme();
-
 const app = express();
 
-// ---------------------------------------------------------------------------
-// Middleware
-// ---------------------------------------------------------------------------
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: { success: false, error: "Too many requests, please try again later." }
+});
+
+app.use("/api", limiter);
+
 app.use((req, res, next) => {
   if (req.path === "/api/webhooks/recall") {
     express.raw({ type: "application/json" })(req, res, next);
@@ -33,38 +38,22 @@ app.use((req, res, next) => {
   }
 });
 
-// ---------------------------------------------------------------------------
-// API docs
-// ---------------------------------------------------------------------------
-// Interactive OpenAPI docs — http://localhost:3000/api-docs
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(openapiSpec, {
   customCss: theme.getBuffer(SwaggerThemeNameEnum.DARK) + `
     .swagger-ui .topbar { display: none; }
   `,
 }));
 
-// ---------------------------------------------------------------------------
-// Routes
-// ---------------------------------------------------------------------------
 app.use("/api", apiRouter);
 
-// ---------------------------------------------------------------------------
-// Health check
-// ---------------------------------------------------------------------------
 app.get("/health", (_req, res) => {
   res.json({ status: "ok", uptime_seconds: Math.floor(process.uptime()) });
 });
 
-// ---------------------------------------------------------------------------
-// 404 handler
-// ---------------------------------------------------------------------------
 app.use((_req, res) => {
   res.status(404).json({ success: false, error: "Route not found" });
 });
 
-// ---------------------------------------------------------------------------
-// Start server
-// ---------------------------------------------------------------------------
 app.listen(PORT, () => {
   logger.info(`recall-meeting-info server running`, { port: PORT });
   logger.info("Available endpoints:", {

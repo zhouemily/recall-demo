@@ -23,6 +23,7 @@
     "axios": "^1.7.2",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
+    "express-rate-limit": "^8.7.0",
     "swagger-themes": "^1.4.3"
   },
   "devDependencies": {

@@ -18,6 +18,8 @@ Insights are generated automatically via the webhook. The `POST /api/meetings/:b
 
 ## Endpoints
 
+> **Rate limiting**: All `/api/*` endpoints are limited to 100 requests per 15 minutes per IP. Exceeding this returns a `429` response.
+
 | Method | Path | Description |
 |--------|------|-------------|
 | `GET` | `/api-docs` | Interactive API documentation (Swagger UI) |
@@ -205,3 +207,4 @@ Response:
 - **Meeting infrastructure**: Recall.ai
 - **API docs**: OpenAPI 3.0 + Swagger UI
 - **HTTP client**: Axios
+- **Rate limiting**: express-rate-limit (100 requests/15 min per IP)
